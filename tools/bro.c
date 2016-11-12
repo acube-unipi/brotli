@@ -410,10 +410,11 @@ static int Compress(int quality, int lgwin, FILE* fin, FILE* fout,
   }
 
   while (1) {
+    printf("=== New loop\n");
     if (available_in == 0 && !is_eof) {
       available_in = fread(input, 1, kFileBufferSize, fin);
       next_in = input;
-      printf("-> %d bytes read\n", available_in);
+      printf("--> %d bytes read\n", available_in);
       if (ferror(fin)) break;
       is_eof = feof(fin);
     }
@@ -428,7 +429,7 @@ static int Compress(int quality, int lgwin, FILE* fin, FILE* fout,
     if (available_out != kFileBufferSize) {
       size_t out_size = kFileBufferSize - available_out;
       fwrite(output, 1, out_size, fout);
-      printf("<- %d bytes written\n", out_size);
+      printf("<-- %d bytes written\n", out_size);
       if (ferror(fout)) break;
       available_out = kFileBufferSize;
       next_out = output;
