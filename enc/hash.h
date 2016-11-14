@@ -329,7 +329,7 @@ static BROTLI_INLINE size_t FN(RightChildIndex)(HashToBinaryTree* self,
    current (incomplete) sequence.
 
    This function must be called with increasing cur_ix positions. */
-static BROTLI_INLINE BackwardMatch* FN(StoreAndFindMatches)(
+static BackwardMatch* FN(StoreAndFindMatches)(
     HashToBinaryTree* self, const uint8_t* const BROTLI_RESTRICT data,
     const size_t cur_ix, const size_t ring_buffer_mask, const size_t max_length,
     const size_t max_backward, size_t* const BROTLI_RESTRICT best_len,
@@ -454,25 +454,25 @@ static BROTLI_INLINE size_t FN(FindAllMatches)(HashToBinaryTree* self,
     matches = FN(StoreAndFindMatches)(self, data, cur_ix, ring_buffer_mask,
         max_length, max_backward, &best_len, matches);
   }
-  for (i = 0; i <= BROTLI_MAX_STATIC_DICTIONARY_MATCH_LEN; ++i) {
-    dict_matches[i] = kInvalidMatch;
-  }
-  {
-    size_t minlen = BROTLI_MAX(size_t, 4, best_len + 1);
-    if (BrotliFindAllStaticDictionaryMatches(&data[cur_ix_masked], minlen,
-                                             max_length, &dict_matches[0])) {
-      size_t maxlen = BROTLI_MIN(
-          size_t, BROTLI_MAX_STATIC_DICTIONARY_MATCH_LEN, max_length);
-      size_t l;
-      for (l = minlen; l <= maxlen; ++l) {
-        uint32_t dict_id = dict_matches[l];
-        if (dict_id < kInvalidMatch) {
-          InitDictionaryBackwardMatch(matches++,
-              max_backward + (dict_id >> 5) + 1, l, dict_id & 31);
-        }
-      }
-    }
-  }
+//  for (i = 0; i <= BROTLI_MAX_STATIC_DICTIONARY_MATCH_LEN; ++i) {
+//    dict_matches[i] = kInvalidMatch;
+//  }
+//  {
+//    size_t minlen = BROTLI_MAX(size_t, 4, best_len + 1);
+//    if (BrotliFindAllStaticDictionaryMatches(&data[cur_ix_masked], minlen,
+//                                             max_length, &dict_matches[0])) {
+//      size_t maxlen = BROTLI_MIN(
+//          size_t, BROTLI_MAX_STATIC_DICTIONARY_MATCH_LEN, max_length);
+//      size_t l;
+//      for (l = minlen; l <= maxlen; ++l) {
+//        uint32_t dict_id = dict_matches[l];
+//        if (dict_id < kInvalidMatch) {
+//          InitDictionaryBackwardMatch(matches++,
+//              max_backward + (dict_id >> 5) + 1, l, dict_id & 31);
+//        }
+//      }
+//    }
+//  }
   return (size_t)(matches - orig_matches);
 }
 

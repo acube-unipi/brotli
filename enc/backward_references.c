@@ -10,6 +10,7 @@
 
 #include <math.h>  /* INFINITY */
 #include <string.h>  /* memcpy, memset */
+#include <stdio.h> /* TODO: DEBUG */
 
 #include "../common/constants.h"
 #include <brotli/types.h>
@@ -751,6 +752,25 @@ static BROTLI_NOINLINE void CreateZopfliBackwardReferences(
   BROTLI_FREE(m, nodes);
 }
 
+static void print_all_matches(
+        size_t position, uint32_t *matches_per_position, size_t num_bytes, BackwardMatch *matches
+)
+{
+    int i, j;
+    BackwardMatch *match_it = matches;
+    printf("!!! Match begin\n");
+    for (i = 0; i + 3 < num_bytes; ++i) {
+        size_t pos = position + i;
+        uint32_t matches_pos = matches_per_position[i];
+        for (BackwardMatch *end = match_it + matches_pos; match_it < end; ++match_it) {
+            uint32_t dist = match_it->distance;
+            uint32_t len = BackwardMatchLength(match_it);
+            printf("(%d <- %d @ %d)\n", pos, pos - dist, len);
+        }
+    }
+}
+
+
 static BROTLI_NOINLINE void CreateHqZopfliBackwardReferences(
     MemoryManager* m, size_t num_bytes, size_t position, BROTLI_BOOL is_last,
     const uint8_t* ringbuffer, size_t ringbuffer_mask,
@@ -813,6 +833,10 @@ static BROTLI_NOINLINE void CreateHqZopfliBackwardReferences(
       }
     }
   }
+
+  // TODO: DEBUG
+//  print_all_matches(position, num_matches, num_bytes, matches);
+
   orig_num_literals = *num_literals;
   orig_last_insert_len = *last_insert_len;
   memcpy(orig_dist_cache, dist_cache, 4 * sizeof(dist_cache[0]));
