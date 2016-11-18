@@ -53,7 +53,7 @@ static BROTLI_INLINE void RingBufferInit(RingBuffer* rb) {
   rb->buffer_ = 0;
 }
 
-static BROTLI_INLINE void RingBufferSetup(
+static void RingBufferSetup(
     const BrotliEncoderParams* params, RingBuffer* rb) {
   int window_bits = ComputeRbBits(params);
   int tail_bits = params->lgblock;

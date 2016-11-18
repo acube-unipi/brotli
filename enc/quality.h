@@ -71,7 +71,7 @@ static BROTLI_INLINE void SanitizeParams(BrotliEncoderParams* params) {
 }
 
 /* Returns optimized lg_block value. */
-static BROTLI_INLINE int ComputeLgBlock(const BrotliEncoderParams* params) {
+static int ComputeLgBlock(const BrotliEncoderParams* params) {
   int lgblock = params->lgblock;
   if (params->quality == FAST_ONE_PASS_COMPRESSION_QUALITY ||
       params->quality == FAST_TWO_PASS_COMPRESSION_QUALITY) {
@@ -95,7 +95,7 @@ static BROTLI_INLINE int ComputeLgBlock(const BrotliEncoderParams* params) {
    added block fits there completely and we still get lgwin bits and at least
    read_block_size_bits + 1 bits because the copy tail length needs to be
    smaller than ring-buffer size. */
-static BROTLI_INLINE int ComputeRbBits(const BrotliEncoderParams* params) {
+static int ComputeRbBits(const BrotliEncoderParams* params) {
   return 1 + BROTLI_MAX(int, params->lgwin, params->lgblock);
 }
 

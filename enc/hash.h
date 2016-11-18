@@ -416,7 +416,7 @@ static BackwardMatch* FN(StoreAndFindMatches)(
    matches in matches[0] to matches[*num_matches - 1]. The matches will be
    sorted by strictly increasing length and (non-strictly) increasing
    distance. */
-static BROTLI_INLINE size_t FN(FindAllMatches)(HashToBinaryTree* self,
+static size_t FN(FindAllMatches)(HashToBinaryTree* self,
     const uint8_t* data, const size_t ring_buffer_mask, const size_t cur_ix,
     const size_t max_length, const size_t max_backward,
     const BrotliEncoderParams* params, BackwardMatch* matches) {

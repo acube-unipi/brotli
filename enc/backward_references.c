@@ -771,7 +771,7 @@ static void print_all_matches(
 }
 
 
-static BROTLI_NOINLINE void CreateHqZopfliBackwardReferences(
+static void CreateHqZopfliBackwardReferences(
     MemoryManager* m, size_t num_bytes, size_t position, BROTLI_BOOL is_last,
     const uint8_t* ringbuffer, size_t ringbuffer_mask,
     const BrotliEncoderParams* params, H10* hasher, int* dist_cache,
