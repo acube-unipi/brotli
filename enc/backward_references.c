@@ -763,7 +763,8 @@ static void print_all_matches(
     for (i = 0; i + 3 < num_bytes; ++i) {
         size_t pos = position + i;
         uint32_t matches_pos = matches_per_position[i];
-        for (BackwardMatch *end = match_it + matches_pos; match_it < end; ++match_it) {
+				BackwardMatch *end = match_it + matches_pos;
+        for (; match_it < end; ++match_it) {
             uint32_t dist = match_it->distance;
             uint32_t len = BackwardMatchLength(match_it);
             printf("(%d <- %d @ %d)\n", pos, pos - dist, len);
