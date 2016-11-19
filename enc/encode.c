@@ -1615,7 +1615,7 @@ BROTLI_BOOL BrotliEncoderCompressStream(
       size_t copy_input_size =
           BROTLI_MIN(size_t, remaining_block_size, *available_in);
       CopyInputToRingBuffer(s, copy_input_size, *next_in);
-      printf("-!- Copied %d bytes to RingBuffer (%d bytes in)\n", copy_input_size, s->ringbuffer_.pos_);
+      //printf("-!- Copied %d bytes to RingBuffer (%d bytes in)\n", copy_input_size, s->ringbuffer_.pos_);
       *next_in += copy_input_size;
       *available_in -= copy_input_size;
       continue;
@@ -1636,7 +1636,7 @@ BROTLI_BOOL BrotliEncoderCompressStream(
             (*available_in == 0) && op == BROTLI_OPERATION_FLUSH);
         BROTLI_BOOL result = EncodeData(s, is_last, force_flush,
             &s->available_out_, &s->next_out_);
-        printf("-!- EncodeData, %d available bytes out\n", s->available_out_);
+        //printf("-!- EncodeData, %d available bytes out\n", s->available_out_);
         if (!result) return BROTLI_FALSE;
         if (force_flush) s->stream_state_ = BROTLI_STREAM_FLUSH_REQUESTED;
         if (is_last) s->stream_state_ = BROTLI_STREAM_FINISHED;
@@ -1696,6 +1696,9 @@ BROTLI_BOOL BrotliEncoderWriteData(
     const BROTLI_BOOL force_flush, size_t* out_size, uint8_t** output) {
   return EncodeData(s, is_last, force_flush, out_size, output);
 }
+
+
+
 /* <<< DEPRECATED */
 
 #if defined(__cplusplus) || defined(c_plusplus)

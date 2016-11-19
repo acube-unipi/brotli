@@ -14,6 +14,7 @@
 
 #include "../common/constants.h"
 #include <brotli/types.h>
+#include <stdint.h>
 #include "./command.h"
 #include "./fast_log.h"
 #include "./find_match_length.h"
@@ -758,7 +759,7 @@ static void print_all_matches(
 {
     int i, j;
     BackwardMatch *match_it = matches;
-    printf("!!! Match begin\n");
+//    printf("!!! Match begin\n");
     for (i = 0; i + 3 < num_bytes; ++i) {
         size_t pos = position + i;
         uint32_t matches_pos = matches_per_position[i];
@@ -810,14 +811,13 @@ static void CreateHqZopfliBackwardReferences(
     num_found_matches = FindAllMatchesH10(hasher, ringbuffer, ringbuffer_mask,
         pos, max_length, max_distance, params, &matches[cur_match_pos]);
     cur_match_end = cur_match_pos + num_found_matches;
-    for (j = cur_match_pos; j + 1 < cur_match_end; ++j) {
-      assert(BackwardMatchLength(&matches[j]) <
-          BackwardMatchLength(&matches[j + 1]));
-      assert(matches[j].distance > max_distance ||
-             matches[j].distance <= matches[j + 1].distance);
-    }
+//    printf("%d: %d matches found\n", pos, num_found_matches);
+//    for (j = cur_match_pos; j < cur_match_end; ++j) {
+//      printf("%d: %d @ %d\n", pos, matches[j].length_and_code, matches[j].distance);
+//    }
     num_matches[i] = (uint32_t)num_found_matches;
     if (num_found_matches > 0) {
+//      printf("------------------\n");
       const size_t match_len = BackwardMatchLength(&matches[cur_match_end - 1]);
       if (match_len > MAX_ZOPFLI_LEN_QUALITY_11) {
         const size_t skip = match_len - 1;
@@ -835,7 +835,7 @@ static void CreateHqZopfliBackwardReferences(
   }
 
   // TODO: DEBUG
-//  print_all_matches(position, num_matches, num_bytes, matches);
+  print_all_matches(position, num_matches, num_bytes, matches);
 
   orig_num_literals = *num_literals;
   orig_last_insert_len = *last_insert_len;

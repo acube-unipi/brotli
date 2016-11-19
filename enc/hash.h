@@ -357,6 +357,9 @@ static BackwardMatch* FN(StoreAndFindMatches)(
   if (should_reroot_tree) {
     self->buckets_[key] = (uint32_t)cur_ix;
   }
+//  if (cur_ix == 2097662) {
+//    printf("Here we are\n");
+//  }
   for (depth_remaining = MAX_TREE_SEARCH_DEPTH; ; --depth_remaining) {
     const size_t backward = cur_ix - prev_ix;
     const size_t prev_ix_masked = prev_ix & ring_buffer_mask;
@@ -409,6 +412,16 @@ static BackwardMatch* FN(StoreAndFindMatches)(
   return matches;
 }
 
+static char *copy_limited(const char *input, const size_t length, char *buffer, size_t buf_len)
+{
+  int min = BROTLI_MIN(int, length, buf_len);
+  for (int i = 0; i < min; ++i) {
+    buffer[i] = input[i];
+  }
+  buffer[min < buf_len ? min + 1 : buf_len - 1] = '\0';
+  return buffer;
+}
+
 /* Finds all backward matches of &data[cur_ix & ring_buffer_mask] up to the
    length of max_length and stores the position cur_ix in the hash table.
 
@@ -429,6 +442,12 @@ static size_t FN(FindAllMatches)(HashToBinaryTree* self,
   uint32_t dict_matches[BROTLI_MAX_STATIC_DICTIONARY_MATCH_LEN + 1];
   size_t i;
   if (cur_ix < short_match_max_backward) { stop = 0; }
+  char buffer[16];
+//  printf(
+//      "data = %s\nmask = %d\ncur_ix = %d\nmax_length = %d\nmax_backward = %d\n",
+//      copy_limited(data, max_length, buffer, 16), ring_buffer_mask, cur_ix,
+//      max_length, max_backward
+//  );
   for (i = cur_ix - 1; i > stop && best_len <= 2; --i) {
     size_t prev_ix = i;
     const size_t backward = cur_ix - prev_ix;
@@ -454,6 +473,10 @@ static size_t FN(FindAllMatches)(HashToBinaryTree* self,
     matches = FN(StoreAndFindMatches)(self, data, cur_ix, ring_buffer_mask,
         max_length, max_backward, &best_len, matches);
   }
+//  for (BackwardMatch *m_it = orig_matches; m_it != matches; ++m_it) {
+//    printf("M: dist = %d, length_and_code = %d\n", m_it->distance, m_it->length_and_code);
+//  }
+//  printf("----------------------------\n");
 //  for (i = 0; i <= BROTLI_MAX_STATIC_DICTIONARY_MATCH_LEN; ++i) {
 //    dict_matches[i] = kInvalidMatch;
 //  }
@@ -496,7 +519,7 @@ static BROTLI_INLINE void FN(StoreRange)(HashToBinaryTree* self,
   }
 }
 
-static BROTLI_INLINE void FN(StitchToPreviousBlock)(HashToBinaryTree* self,
+static void FN(StitchToPreviousBlock)(HashToBinaryTree* self,
     size_t num_bytes, size_t position, const uint8_t* ringbuffer,
     size_t ringbuffer_mask) {
   if (num_bytes >= FN(HashTypeLength)() - 1 &&
