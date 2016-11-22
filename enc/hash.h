@@ -414,8 +414,8 @@ static BackwardMatch* FN(StoreAndFindMatches)(
 
 static char *copy_limited(const char *input, const size_t length, char *buffer, size_t buf_len)
 {
-  int min = BROTLI_MIN(int, length, buf_len);
-  for (int i = 0; i < min; ++i) {
+	int i, min = BROTLI_MIN(int, length, buf_len);
+  for (i = 0; i < min; ++i) {
     buffer[i] = input[i];
   }
   buffer[min < buf_len ? min + 1 : buf_len - 1] = '\0';
