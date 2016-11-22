@@ -30,7 +30,7 @@ BROTLI_INTERNAL void BrotliCreateBackwardReferences(
     const uint8_t* ringbuffer, size_t ringbuffer_mask,
     const BrotliEncoderParams* params, Hashers* hashers, int* dist_cache,
     size_t* last_insert_len, Command* commands, size_t* num_commands,
-    size_t* num_literals);
+    size_t* num_literals, void *serializer_handle);
 
 typedef struct ZopfliNode {
   /* best length to get up to this byte (not including this byte itself)

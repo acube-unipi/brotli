@@ -4,3 +4,6 @@
 [submodule "research/esaxx"]
 	path = research/esaxx
 	url = https://github.com/hillbig/esaxx
+[submodule "Serialize"]
+	path = external/match_serialize
+	url = https://github.com/farruggia/match_serialize.git

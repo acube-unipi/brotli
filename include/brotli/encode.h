@@ -253,6 +253,10 @@ BROTLI_ENC_API void BrotliEncoderSetCustomDictionary(
     BrotliEncoderState* state, size_t size,
     const uint8_t dict[BROTLI_ARRAY_PARAM(size)]);
 
+BROTLI_ENC_API void BrotliEncoderSetDumpFile(
+    BrotliEncoderState* state, const char *dump_path
+  );
+
 /**
  * Calculates the output size bound for the given @p input_size.
  *
@@ -411,7 +415,6 @@ BROTLI_ENC_API BROTLI_BOOL BrotliEncoderHasMoreOutput(
  */
 BROTLI_ENC_API const uint8_t* BrotliEncoderTakeOutput(
     BrotliEncoderState* state, size_t* size);
-
 
 /**
  * Gets an encoder library version.

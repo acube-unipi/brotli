@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+
+import argparse
+from os import path, stat
+from tempfile import NamedTemporaryFile
+import sys
+from subprocess import run, PIPE
+
+from enum import Enum, unique
+
+compressor = path.join(path.dirname(__file__), 'bro')
+
+
+def compress(args):
+    # set_trace()
+    input = args.infile
+    output = args.outfile
+    quality = args.quality
+    window = args.window
+    with NamedTemporaryFile() as junk:
+        cmd = '{} --input {} -D {} --output {} --force --quality {} --window {} --verbose'.format(
+            compressor, input, output, junk.name, quality, window
+        )
+        proc = run(cmd.split(), stdout=PIPE, stderr=PIPE, check=True)
+    for out_line in proc.stdout.decode("utf-8").splitlines():
+        fields = out_line.split()
+        if len(fields) < 5:
+            continue
+        mb_sec = float(fields[3])
+        file_size_mb = stat(input).st_size / 2**20
+        compress_time = int(10**9 * (1 / mb_sec) * file_size_mb)
+
+    print('Time\t{}\tμs'.format(
+        compress_time
+    ))
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    # Parse the arguments
+    try:
+        args = argv[1:]
+
+        parser = argparse.ArgumentParser(description='Simple brotli wrapper.')
+        parser.add_argument('infile', help='Input filename')
+        parser.add_argument('outfile', help='Output filename')
+        parser.add_argument('-q', '--quality',
+                            default=11,
+                            help='Compression quality'
+                            )
+
+        parser.add_argument('-w', '--window',
+                            default=22,
+                            help='Window length (in log2(bytes))'
+                            )
+        args = parser.parse_args(args)
+        compress(args)
+
+    except Exception as e:
+        print(e)
+
+if __name__ == '__main__':
+    main()

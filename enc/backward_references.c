@@ -24,6 +24,9 @@
 #include "./prefix.h"
 #include "./quality.h"
 
+#include <serializer/match_serialize.h>
+#include <stdlib.h>
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
@@ -753,22 +756,37 @@ static BROTLI_NOINLINE void CreateZopfliBackwardReferences(
   BROTLI_FREE(m, nodes);
 }
 
-static void print_all_matches(
-        size_t position, uint32_t *matches_per_position, size_t num_bytes, BackwardMatch *matches
+static void dump_all_matches(
+    size_t position, uint32_t *matches_per_position, size_t num_bytes,
+    BackwardMatch *matches, void *serializer_handle
 )
 {
-    int i, j;
-    BackwardMatch *match_it = matches;
-//    printf("!!! Match begin\n");
-    for (i = 0; i + 3 < num_bytes; ++i) {
-        size_t pos = position + i;
-        uint32_t matches_pos = matches_per_position[i];
-        for (BackwardMatch *end = match_it + matches_pos; match_it < end; ++match_it) {
-            uint32_t dist = match_it->distance;
-            uint32_t len = BackwardMatchLength(match_it);
-            printf("(%d <- %d @ %d)\n", pos, pos - dist, len);
-        }
+  if (!serializer_handle) {
+    return;
+  }
+  int i, j;
+  BackwardMatch *match_it = matches, *end;
+  size_t api_matches_num = 4;
+  match_t *api_matches = (match_t*)malloc(sizeof(*api_matches) * api_matches_num);
+  for (i = 0; i + 3 < num_bytes; ++i) {
+    size_t pos = position + i;
+    uint32_t matches_pos = matches_per_position[i];
+    if (matches_pos == 0) {
+      continue;
     }
+    if (matches_pos > api_matches_num) {
+      api_matches_num = matches_pos * 2;
+      api_matches = (match_t*)realloc(api_matches, sizeof(*api_matches) * api_matches_num);
+    }
+    for (j=0, end = match_it + matches_pos; match_it < end; ++match_it, ++j) {
+      uint32_t dist = match_it->distance;
+      uint32_t len = BackwardMatchLength(match_it);
+      api_matches[j].distance = dist;
+      api_matches[j].length = len;
+    }
+    serialize(serializer_handle, pos, api_matches, api_matches + matches_pos);
+  }
+  free(api_matches);
 }
 
 
@@ -777,7 +795,7 @@ static void CreateHqZopfliBackwardReferences(
     const uint8_t* ringbuffer, size_t ringbuffer_mask,
     const BrotliEncoderParams* params, H10* hasher, int* dist_cache,
     size_t* last_insert_len, Command* commands, size_t* num_commands,
-    size_t* num_literals) {
+    size_t* num_literals, void *serializer_handle) {
   const size_t max_backward_limit = MaxBackwardLimit(params->lgwin);
   uint32_t* num_matches = BROTLI_ALLOC(m, uint32_t, num_bytes);
   size_t matches_size = 4 * num_bytes;
@@ -834,8 +852,7 @@ static void CreateHqZopfliBackwardReferences(
     }
   }
 
-  // TODO: DEBUG
-  print_all_matches(position, num_matches, num_bytes, matches);
+  dump_all_matches(position, num_matches, num_bytes, matches, serializer_handle);
 
   orig_num_literals = *num_literals;
   orig_last_insert_len = *last_insert_len;
@@ -883,7 +900,8 @@ void BrotliCreateBackwardReferences(MemoryManager* m,
                                     size_t* last_insert_len,
                                     Command* commands,
                                     size_t* num_commands,
-                                    size_t* num_literals) {
+                                    size_t* num_literals,
+                                    void *serializer_handle) {
   if (params->quality == ZOPFLIFICATION_QUALITY) {
     CreateZopfliBackwardReferences(
         m, num_bytes, position, is_last, ringbuffer, ringbuffer_mask,
@@ -894,7 +912,7 @@ void BrotliCreateBackwardReferences(MemoryManager* m,
     CreateHqZopfliBackwardReferences(
         m, num_bytes, position, is_last, ringbuffer, ringbuffer_mask,
         params, hashers->h10, dist_cache,
-        last_insert_len, commands, num_commands, num_literals);
+        last_insert_len, commands, num_commands, num_literals, serializer_handle);
     return;
   }
 

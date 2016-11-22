@@ -78,6 +78,7 @@ static int ParseQuality(const char* s, int* quality) {
 static void ParseArgv(int argc, char **argv,
                       char **input_path,
                       char **output_path,
+                      char **dump_path,
                       char **dictionary_path,
                       int *force,
                       int *quality,
@@ -90,6 +91,7 @@ static void ParseArgv(int argc, char **argv,
   *force = 0;
   *input_path = 0;
   *output_path = 0;
+  *dump_path = 0;
   *repeat = 1;
   *verbose = 0;
   *lgwin = 22;
@@ -145,6 +147,12 @@ static void ParseArgv(int argc, char **argv,
         *output_path = argv[k + 1];
         ++k;
         continue;
+      } else if (!strcmp("--dump-matches", argv[k]) ||
+                 !strcmp("--dump", argv[k]) ||
+                 !strcmp("-D", argv[k])) {
+        *dump_path = argv[k + 1];
+        ++k;
+        continue;
       } else if (!strcmp("--custom-dictionary", argv[k])) {
         if (*dictionary_path != 0) {
           goto error;
@@ -186,7 +194,7 @@ error:
           "Usage: %s [--force] [--quality n] [--decompress]"
           " [--input filename] [--output filename] [--repeat iters]"
           " [--verbose] [--window n] [--custom-dictionary filename]"
-          " [--no-copy-stat]\n",
+          " [--dump-matches dump_file] [--no-copy-stat]\n",
           argv[0]);
   exit(1);
 }
@@ -383,7 +391,7 @@ end:
 }
 
 static int Compress(int quality, int lgwin, FILE* fin, FILE* fout,
-    const char *dictionary_path) {
+    const char *dictionary_path, const char *dump_path) {
   BrotliEncoderState* s = BrotliEncoderCreateInstance(0, 0, 0);
   uint8_t* buffer = (uint8_t*)malloc(kFileBufferSize << 1);
   uint8_t* input = buffer;
@@ -408,13 +416,14 @@ static int Compress(int quality, int lgwin, FILE* fin, FILE* fout,
     BrotliEncoderSetCustomDictionary(s, dictionary_size, dictionary);
     free(dictionary);
   }
+  if (dump_path != NULL) {
+    BrotliEncoderSetDumpFile(s, dump_path);
+  }
 
   while (1) {
-    //printf("=== New loop\n");
     if (available_in == 0 && !is_eof) {
       available_in = fread(input, 1, kFileBufferSize, fin);
       next_in = input;
-      //printf("--> %d bytes read\n", available_in);
       if (ferror(fin)) break;
       is_eof = feof(fin);
     }
@@ -459,6 +468,7 @@ finish:
 int main(int argc, char** argv) {
   char *input_path = 0;
   char *output_path = 0;
+  char *dump_path = 0;
   char *dictionary_path = 0;
   int force = 0;
   int quality = 11;
@@ -469,7 +479,7 @@ int main(int argc, char** argv) {
   int copy_stat = 1;
   clock_t clock_start;
   int i;
-  ParseArgv(argc, argv, &input_path, &output_path, &dictionary_path, &force,
+  ParseArgv(argc, argv, &input_path, &output_path, &dump_path, &dictionary_path, &force,
             &quality, &decompress, &repeat, &verbose, &lgwin, &copy_stat);
   clock_start = clock();
   for (i = 0; i < repeat; ++i) {
@@ -479,7 +489,7 @@ int main(int argc, char** argv) {
     if (decompress) {
       is_ok = Decompress(fin, fout, dictionary_path);
     } else {
-      is_ok = Compress(quality, lgwin, fin, fout, dictionary_path);
+      is_ok = Compress(quality, lgwin, fin, fout, dictionary_path, dump_path);
     }
     if (!is_ok) {
       unlink(output_path);

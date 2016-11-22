@@ -31,6 +31,8 @@
 #include "./utf8_util.h"
 #include "./write_bits.h"
 
+#include <serializer/match_serialize.h>
+
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
@@ -95,6 +97,8 @@ typedef struct BrotliEncoderStateStruct {
   /* Command and literal buffers for FAST_TWO_PASS_COMPRESSION_QUALITY. */
   uint32_t* command_buf_;
   uint8_t* literal_buf_;
+
+  void *serializer_handle;
 
   uint8_t* next_out_;
   size_t available_out_;
@@ -630,6 +634,8 @@ static void BrotliEncoderInitState(BrotliEncoderState* s) {
   s->commands_ = 0;
   s->cmd_alloc_size_ = 0;
 
+  s->serializer_handle = NULL;
+
   /* Initialize distance cache. */
   s->dist_cache_[0] = 4;
   s->dist_cache_[1] = 11;
@@ -669,6 +675,9 @@ static void BrotliEncoderCleanupState(BrotliEncoderState* s) {
   BROTLI_FREE(m, s->commands_);
   RingBufferFree(m, &s->ringbuffer_);
   DestroyHashers(m, &s->hashers_);
+  if (s->serializer_handle) {
+    free_serializer(s->serializer_handle);
+  }
   BROTLI_FREE(m, s->large_table_);
   BROTLI_FREE(m, s->command_buf_);
   BROTLI_FREE(m, s->literal_buf_);
@@ -779,6 +788,12 @@ void BrotliEncoderSetCustomDictionary(BrotliEncoderState* s, size_t size,
   HashersPrependCustomDictionary(m, &s->hashers_, &s->params, dict_size, dict);
   if (BROTLI_IS_OOM(m)) return;
 }
+
+BROTLI_ENC_API void BrotliEncoderSetDumpFile(
+    BrotliEncoderState* state, const char *dump_path) {
+  state->serializer_handle = get_serializer(dump_path);
+}
+
 
 /* Marks all input as processed.
    Returns true if position wrapping occurs. */
@@ -903,7 +918,8 @@ static BROTLI_BOOL EncodeData(
                                  &s->last_insert_len_,
                                  &s->commands_[s->num_commands_],
                                  &s->num_commands_,
-                                 &s->num_literals_);
+                                 &s->num_literals_,
+                                 s->serializer_handle);
   if (BROTLI_IS_OOM(m)) return BROTLI_FALSE;
 
   {

@@ -147,10 +147,14 @@ add_library(brotlienc
   enc/memory.c
   enc/metablock.c
   enc/static_dict.c
-  enc/utf8_util.c)
+  enc/utf8_util.c enc/dumper.h)
 
 # Older CMake versions does not understand INCLUDE_DIRECTORIES property.
 include_directories(${BROTLI_INCLUDE_DIRS})
+
+# Includes the serializer
+add_subdirectory("external/match_serialize")
+include_directories(${MatchSerializer_INCLUDE_DIRS})
 
 foreach(lib brotlicommon brotlidec brotlienc)
   target_link_libraries(${lib} ${LIBM_LIBRARY})
@@ -181,7 +185,18 @@ endif()
 
 # Build the bro executable
 add_executable(bro tools/bro.c)
-target_link_libraries(bro ${BROTLI_LIBRARIES})
+target_link_libraries(bro ${BROTLI_LIBRARIES} match_serialize_libs)
+
+add_custom_command(
+  OUTPUT brotli_wrapper
+  COMMAND cp
+  ARGS ${CMAKE_CURRENT_SOURCE_DIR}/brotli_wrapper ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS brotli_wrapper
+)
+add_custom_target(wrapper
+  ALL
+  DEPENDS brotli_wrapper
+)
 
 # Installation
 if(NOT BROTLI_BUNDLED_MODE)
